@@ -32,6 +32,7 @@ func main() {
 		println("1. Add Item")
 		println("2. Remove Item")
 		println("3. Mark Item")
+		println("4. Show All")
 		println("(Q/q) quit.")
 		userInput, err := takeInputFromUser("")
 
@@ -67,6 +68,7 @@ func main() {
 			}
 		//-----Deletion-----
 		case "2":
+			handleShowAll()
 			input, err := takeInputFromUser("Enter item id to remove: ")
 			if err != nil {
 				fmt.Println(err)
@@ -85,44 +87,46 @@ func main() {
 				fmt.Println(err)
 				return
 			}
+			handleShowAll()
 		//-----Mark-----
 		case "3":
+			handleShowAll()
 			input, err := takeInputFromUser("Enter item id to mark: ")
 			if err != nil {
 				fmt.Println(err)
 				return
 			}
-			id, err := strconv.Atoi(input)
+			index, err := strconv.Atoi(input)
 
 			if err != nil {
 				fmt.Println(err)
 				return
 			}
 
-			err = handleUpdation(id, UPDATE)
+			err = handleUpdation(index-1, UPDATE)
 
 			if err != nil {
 				fmt.Println(err)
 				return
 			}
+			handleShowAll()
+		case "4":
+			handleShowAll()
 		default:
 			fmt.Println("Invalid Input")
 			continue
 		}
 
-		userInput, err = takeInputFromUser("Continue....?[(Y/y)/(N/n)]")
+		userInput, err = takeInputFromUser("Press Enter to continue....?")
 
 		if err != nil {
 			fmt.Println("Error reading input: ", err)
 			break
 		}
 
-		if strings.ToLower(userInput) == "y" {
+		if strings.ToLower(userInput) == "\n" {
 			continue
-		} else if strings.ToLower(userInput) == "n" {
-			break
 		}
-
 	}
 }
 
@@ -148,48 +152,59 @@ func handleItemAddition(description string) error {
 	}
 
 	jsonData = append(jsonData, data)
-	fmt.Println(jsonData)
 	return WriteJson(string(FILE_NAME), jsonData)
 }
 
-func handleUpdation(id int, m mode) error {
+func handleUpdation(index int, m mode) error {
 	jsonData, err := ReadJson[TodoItem](FILE_NAME)
 
 	if err != nil {
 		return err
 	}
 
-	if len(jsonData) == 0 {
+	if len(jsonData) == 0 || index > len(jsonData) {
 		return errors.New("item doesnt exist")
 	}
 
-	if m == UPDATE {
-		itemIndex := -1
-		for index, item := range jsonData {
-			if item.Id == id {
-				itemIndex = index
-				break
-			}
-		}
-
-		if itemIndex == -1 {
-			return errors.New("item doesnt exist")
-		}
-		jsonData[itemIndex].IsDone = !jsonData[itemIndex].IsDone
+	switch m {
+	case UPDATE:
+		jsonData[index].IsDone = !jsonData[index].IsDone
 		return WriteJson(string(FILE_NAME), jsonData)
-	} else if m == DELETE {
+	case DELETE:
 		var data []TodoItem = make([]TodoItem, 0)
-		for _, item := range jsonData {
-			if item.Id != id {
+		count := 0
+		for id, item := range jsonData {
+			count++
+			jsonData[id].Id = count
+			if item.Id != index {
 				data = append(data, item)
 			}
 		}
+		fmt.Println(count)
 
 		if len(data) == 0 {
 			return errors.New("item doesnt exist")
 		}
 
 		return WriteJson(string(FILE_NAME), data)
+	}
+
+	return nil
+}
+
+func handleShowAll() error {
+	jsonData, err := ReadJson[TodoItem](FILE_NAME)
+
+	if err != nil {
+		return err
+	}
+
+	for index, item := range jsonData {
+		tick := " "
+		if item.IsDone {
+			tick = "✓"
+		}
+		fmt.Printf("%d.[%s] %s\n", index+1, tick, item.Description)
 	}
 
 	return nil

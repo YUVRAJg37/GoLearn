@@ -42,5 +42,3 @@ func WriteJson[T any](path string, data []T) error {
 
 	return encoder.Encode(data)
 }
-
-//test
