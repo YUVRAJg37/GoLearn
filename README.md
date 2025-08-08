@@ -1,6 +1,5 @@
 ### Task to do
-
-- TODO
+- ~~TODO~~
 - Calculator API
 - Dead link finder
 - URL Shortner
